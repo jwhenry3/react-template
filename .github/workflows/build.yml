@@ -1,0 +1,39 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Cache
+        uses: actions/cache@v2.1.5
+        with:
+          path: |
+            ./node_modules
+            ./app/node_modules
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+      # run commands for libraries
+      - name: Install Library Dependencies
+        run: yarn install --frozen-lockfile
+      - name: Test and Build Library
+        run: yarn test
+      # run commands for apps
+      - name: Install App Dependencies
+        run: cd app && yarn install --frozen-lockfile
+      - name: Build App
+        run: cd app && yarn build
